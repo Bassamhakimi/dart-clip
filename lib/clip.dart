@@ -13,7 +13,7 @@ class Clip extends StatefulWidget {
     this.onResume,
     this.onWillPop,
     AutovalidateMode? autovalidateMode,
-    this.focusNode,  
+    this.focusNode,
   })  : autovalidateMode = autovalidateMode ?? AutovalidateMode.disabled,
         super(key: key);
 
@@ -21,12 +21,12 @@ class Clip extends StatefulWidget {
 
   static ClipState of(BuildContext context) {
     final _ClipScope scope =
-        context.dependOnInheritedWidgetOfExactType<_ClipScope>()!;
+    context.dependOnInheritedWidgetOfExactType<_ClipScope>()!;
     return scope._clipState;
   }
 
   final Widget child;
-  final FocusNode? focusNode;
+  //final FocusNode? focusNode;
   final WillPopCallback? onWillPop;
   final VoidCallback? onChanged;
   final AutovalidateMode autovalidateMode;
@@ -49,36 +49,32 @@ class ClipState extends State<Clip> {
     });
   }
 
-  @override
+  /*@override
   void initState() {
     super.initState();
     widget.focusNode?.addListener(_handleFocusChange);  // Add this line
-  }
+  }*/
 
   @override
   void dispose() {
     widget.focusNode?.removeListener(_handleFocusChange);  // Add this line
     super.dispose();
   }
-  final Set<ClipFieldState<dynamic>> _clips = <ClipFieldState<dynamic>>{};
+  /*final Set<ClipFieldState<dynamic>> _clips = <ClipFieldState<dynamic>>{};
 
-  @override
-  void initState() {
-    super.initState();
-    widget.focusNode?.addListener(_handleFocusChange);
-  }
+
 
   @override
   void dispose() {
     widget.focusNode?.removeListener(_handleFocusChange);
     super.dispose();
-  }
+  }*/
 
-  void _handleFocusChange() {
-    setState(() {
-      _hasFocus = widget.focusNode?.hasFocus ?? false;
-    });
-  }
+  //void _handleFocusChange() {
+    //setState(() {
+      //_hasFocus = widget.focusNode?.hasFocus ?? false;
+    //});
+  //}
 
   void _clipDidChange() {
     if (widget.onChanged != null) widget.onChanged!();
@@ -102,34 +98,34 @@ class ClipState extends State<Clip> {
   }
 
   @override
-Widget build(BuildContext context) {
-  switch (widget.autovalidateMode) {
-    case AutovalidateMode.always:
-      _validate();
-      break;
-    case AutovalidateMode.onUserInteraction:
-      if (_hasInteractedByUser) {
+  Widget build(BuildContext context) {
+    switch (widget.autovalidateMode) {
+      case AutovalidateMode.always:
         _validate();
-      }
-      break;
-    case AutovalidateMode.onUnfocus:  // Add this case
-      if (!_hasFocus && _hasInteractedByUser) {
-        _validate();
-      }
-      break;
-    case AutovalidateMode.disabled:
-      break;
-  }
+        break;
+      case AutovalidateMode.onUserInteraction:
+        if (_hasInteractedByUser) {
+          _validate();
+        }
+        break;
+      case AutovalidateMode.onUnfocus:  // Add this case
+        if (!_hasFocus && _hasInteractedByUser) {
+          _validate();
+        }
+        break;
+      case AutovalidateMode.disabled:
+        break;
+    }
 
-  return WillPopScope(
-    onWillPop: widget.onWillPop,
-    child: _ClipScope(
-      clipState: this,
-      generation: _generation,
-      child: widget.child,
-    ),
-  );
-}
+    return WillPopScope(
+      onWillPop: widget.onWillPop,
+      child: _ClipScope(
+        clipState: this,
+        generation: _generation,
+        child: widget.child,
+      ),
+    );
+  }
 
   void save() {
     for (final ClipFieldState<dynamic> clip in _clips) clip.save();
@@ -187,7 +183,7 @@ class ClipField<T> extends StatefulWidget {
     this.initialValue,
     AutovalidateMode? autovalidateMode,
     this.enabled = true,
-    this.focusNode,  
+    this.focusNode,
   })  : autovalidateMode = autovalidateMode ?? AutovalidateMode.disabled,
         super(key: key);
 
@@ -199,7 +195,7 @@ class ClipField<T> extends StatefulWidget {
   final ClipFieldSetter<T?>? onSaved;
   final ClipFieldBuilder<T> builder;
   final Future<T?> Function()? initialValue;
-  final FocusNode? focusNode;
+  //final FocusNode? focusNode;
 
   @override
   ClipFieldState<T> createState() => ClipFieldState<T>();
@@ -211,11 +207,11 @@ class ClipFieldState<T> extends State<ClipField<T>> {
   bool _hasInteractedByUser = false;
   bool _hasFocus = false;
 
-  void _handleFocusChange() {
+ /* void _handleFocusChange() {
     setState(() {
       _hasFocus = widget.focusNode?.hasFocus ?? false;
     });
-  }
+  }*/
 
   @override
   void initState() {
@@ -236,20 +232,20 @@ class ClipFieldState<T> extends State<ClipField<T>> {
   bool get hasError => _errorText != null;
   bool get isValid => widget.validator?.call(_value) == null;
 
-  @override
+ /* @override
   void initState() {
     super.initState();
     widget.focusNode?.addListener(_handleFocusChange);
     Future.microtask(reset);
-  }
+  }*/
 
-  @override
+  /*@override
   void dispose() {
     widget.focusNode?.removeListener(_handleFocusChange);
     Clip.of(context)._unregister(this);
     super.dispose();
   }
-
+*/
   void _handleFocusChange() {
     setState(() {
       _hasFocus = widget.focusNode?.hasFocus ?? false;
@@ -309,28 +305,28 @@ class ClipFieldState<T> extends State<ClipField<T>> {
   }
 
   @override
-Widget build(BuildContext context) {
-  if (widget.enabled) {
-    switch (widget.autovalidateMode) {
-      case AutovalidateMode.always:
-        _validate();
-        break;
-      case AutovalidateMode.onUserInteraction:
-        if (_hasInteractedByUser) {
+  Widget build(BuildContext context) {
+    if (widget.enabled) {
+      switch (widget.autovalidateMode) {
+        case AutovalidateMode.always:
           _validate();
-        }
-        break;
-      case AutovalidateMode.onUnfocus:  // Add this case
-        if (!_hasFocus && _hasInteractedByUser) {
-          _validate();
-        }
-        break;
-      case AutovalidateMode.disabled:
-        break;
+          break;
+        case AutovalidateMode.onUserInteraction:
+          if (_hasInteractedByUser) {
+            _validate();
+          }
+          break;
+        case AutovalidateMode.onUnfocus:  // Add this case
+          if (!_hasFocus && _hasInteractedByUser) {
+            _validate();
+          }
+          break;
+        case AutovalidateMode.disabled:
+          break;
+      }
     }
-  }
 
-  Clip.of(context)._register(this);
-  return widget.builder(this);
-}
+    Clip.of(context)._register(this);
+    return widget.builder(this);
+  }
 }
