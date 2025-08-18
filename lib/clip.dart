@@ -92,7 +92,7 @@ class ClipState extends State<Clip> {
         }
         break;
       case AutovalidateMode.onUnfocus:
-        if (_hasInteractedByUser || !_hasFocus) {
+        if (!_hasFocus && _hasInteractedByUser) {
           _validate();
         }
         break;
@@ -278,7 +278,7 @@ class ClipFieldState<T> extends State<ClipField<T>> {
           }
           break;
         case AutovalidateMode.onUnfocus:
-          if (_hasInteractedByUser || !_hasFocus) {
+          if (!_hasFocus && _hasInteractedByUser) {
             _validate();
           }
           break;
