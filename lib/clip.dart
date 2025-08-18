@@ -13,7 +13,7 @@ class Clip extends StatefulWidget {
     this.onResume,
     this.onWillPop,
     AutovalidateMode? autovalidateMode,
-    // add quality to add image quality for all clips
+    this.focusNode,
   })  : autovalidateMode = autovalidateMode ?? AutovalidateMode.disabled,
         super(key: key);
 
@@ -24,7 +24,7 @@ class Clip extends StatefulWidget {
   }
 
   final Widget child;
-
+  final FocusNode? focusNode;
   final WillPopCallback? onWillPop;
   final VoidCallback? onChanged;
   final AutovalidateMode autovalidateMode;
@@ -38,7 +38,26 @@ class Clip extends StatefulWidget {
 class ClipState extends State<Clip> {
   int _generation = 0;
   bool _hasInteractedByUser = false;
+  bool _hasFocus = false;
   final Set<ClipFieldState<dynamic>> _clips = <ClipFieldState<dynamic>>{};
+
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode?.addListener(_handleFocusChange);
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode?.removeListener(_handleFocusChange);
+    super.dispose();
+  }
+
+  void _handleFocusChange() {
+    setState(() {
+      _hasFocus = widget.focusNode?.hasFocus ?? false;
+    });
+  }
 
   void _clipDidChange() {
     if (widget.onChanged != null) widget.onChanged!();
@@ -69,6 +88,11 @@ class ClipState extends State<Clip> {
         break;
       case AutovalidateMode.onUserInteraction:
         if (_hasInteractedByUser) {
+          _validate();
+        }
+        break;
+      case AutovalidateMode.onUnfocus:
+        if (_hasInteractedByUser || !_hasFocus) {
           _validate();
         }
         break;
@@ -121,7 +145,6 @@ class _ClipScope extends InheritedWidget {
         super(key: key, child: child);
 
   final ClipState _clipState;
-
   final int _generation;
 
   Clip get clip => _clipState.widget;
@@ -131,9 +154,7 @@ class _ClipScope extends InheritedWidget {
 }
 
 typedef ClipFieldValidator<T> = String? Function(T? value);
-
 typedef ClipFieldSetter<T> = void Function(T? newValue);
-
 typedef ClipFieldBuilder<T> = Widget Function(ClipFieldState<T> clip);
 
 class ClipField<T> extends StatefulWidget {
@@ -145,40 +166,52 @@ class ClipField<T> extends StatefulWidget {
     this.initialValue,
     AutovalidateMode? autovalidateMode,
     this.enabled = true,
+    this.focusNode,
   })  : autovalidateMode = autovalidateMode ?? AutovalidateMode.disabled,
         super(key: key);
 
   final bool enabled;
-
   final AutovalidateMode autovalidateMode;
-
   final ClipFieldValidator<T?>? validator;
-
   final ClipFieldSetter<T?>? onSaved;
-
   final ClipFieldBuilder<T> builder;
-
   final Future<T?> Function()? initialValue;
+  final FocusNode? focusNode;
 
   @override
   ClipFieldState<T> createState() => ClipFieldState<T>();
 }
 
-/// The current state of a [ClipField]. Passed to the [ClipFieldBuilder] method
-/// for use in constructing the clip clip's widget.
 class ClipFieldState<T> extends State<ClipField<T>> {
   T? _value;
   String? _errorText;
   bool _hasInteractedByUser = false;
+  bool _hasFocus = false;
 
-  /// The current value of the form field.
   T? get value => _value;
-
-  String get errorText => _errorText!;
-
+  String? get errorText => _errorText;
   bool get hasError => _errorText != null;
-
   bool get isValid => widget.validator?.call(_value) == null;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode?.addListener(_handleFocusChange);
+    Future.microtask(reset);
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode?.removeListener(_handleFocusChange);
+    Clip.of(context)._unregister(this);
+    super.dispose();
+  }
+
+  void _handleFocusChange() {
+    setState(() {
+      _hasFocus = widget.focusNode?.hasFocus ?? false;
+    });
+  }
 
   void save() {
     if (widget.onSaved != null) widget.onSaved!(value);
@@ -196,7 +229,6 @@ class ClipFieldState<T> extends State<ClipField<T>> {
     } else {
       _hasInteractedByUser = false;
       _errorText = null;
-
       Clip.of(context)._clipDidChange();
     }
   }
@@ -215,37 +247,22 @@ class ClipFieldState<T> extends State<ClipField<T>> {
   void didChange(T? value) {
     setState(() {
       _value = value;
+      _hasInteractedByUser = true;
     });
     Clip.of(context)._clipDidChange();
   }
 
   void onPause() {
-    if (Clip.of(context).widget.onPause != null) {
-      Clip.of(context).widget.onPause!.call();
-    }
+    Clip.of(context).widget.onPause?.call();
   }
 
   void onResume() {
-    if (Clip.of(context).widget.onResume != null) {
-      Clip.of(context).widget.onResume!.call();
-    }
+    Clip.of(context).widget.onResume?.call();
   }
 
   @protected
   set value(T? value) {
     _value = value;
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(reset);
-  }
-
-  @override
-  void deactivate() {
-    Clip.of(context)._unregister(this);
-    super.deactivate();
   }
 
   @override
@@ -257,6 +274,11 @@ class ClipFieldState<T> extends State<ClipField<T>> {
           break;
         case AutovalidateMode.onUserInteraction:
           if (_hasInteractedByUser) {
+            _validate();
+          }
+          break;
+        case AutovalidateMode.onUnfocus:
+          if (_hasInteractedByUser || !_hasFocus) {
             _validate();
           }
           break;
