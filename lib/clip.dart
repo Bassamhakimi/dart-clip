@@ -81,34 +81,34 @@ class ClipState extends State<Clip> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    switch (widget.autovalidateMode) {
-      case AutovalidateMode.always:
+Widget build(BuildContext context) {
+  switch (widget.autovalidateMode) {
+    case AutovalidateMode.always:
+      _validate();
+      break;
+    case AutovalidateMode.onUserInteraction:
+      if (_hasInteractedByUser) {
         _validate();
-        break;
-      case AutovalidateMode.onUserInteraction:
-        if (_hasInteractedByUser) {
-          _validate();
-        }
-        break;
-      case AutovalidateMode.onUnfocus:
-        if (!_hasFocus && _hasInteractedByUser) {
-          _validate();
-        }
-        break;
-      case AutovalidateMode.disabled:
-        break;
-    }
-
-    return WillPopScope(
-      onWillPop: widget.onWillPop,
-      child: _ClipScope(
-        clipState: this,
-        generation: _generation,
-        child: widget.child,
-      ),
-    );
+      }
+      break;
+    case AutovalidateMode.onUnfocus:  // Add this case
+      if (!_hasFocus && _hasInteractedByUser) {
+        _validate();
+      }
+      break;
+    case AutovalidateMode.disabled:
+      break;
   }
+
+  return WillPopScope(
+    onWillPop: widget.onWillPop,
+    child: _ClipScope(
+      clipState: this,
+      generation: _generation,
+      child: widget.child,
+    ),
+  );
+}
 
   void save() {
     for (final ClipFieldState<dynamic> clip in _clips) clip.save();
@@ -266,28 +266,28 @@ class ClipFieldState<T> extends State<ClipField<T>> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (widget.enabled) {
-      switch (widget.autovalidateMode) {
-        case AutovalidateMode.always:
+Widget build(BuildContext context) {
+  if (widget.enabled) {
+    switch (widget.autovalidateMode) {
+      case AutovalidateMode.always:
+        _validate();
+        break;
+      case AutovalidateMode.onUserInteraction:
+        if (_hasInteractedByUser) {
           _validate();
-          break;
-        case AutovalidateMode.onUserInteraction:
-          if (_hasInteractedByUser) {
-            _validate();
-          }
-          break;
-        case AutovalidateMode.onUnfocus:
-          if (!_hasFocus && _hasInteractedByUser) {
-            _validate();
-          }
-          break;
-        case AutovalidateMode.disabled:
-          break;
-      }
+        }
+        break;
+      case AutovalidateMode.onUnfocus:  // Add this case
+        if (!_hasFocus && _hasInteractedByUser) {
+          _validate();
+        }
+        break;
+      case AutovalidateMode.disabled:
+        break;
     }
-
-    Clip.of(context)._register(this);
-    return widget.builder(this);
   }
+
+  Clip.of(context)._register(this);
+  return widget.builder(this);
+}
 }
