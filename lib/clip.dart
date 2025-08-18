@@ -13,9 +13,11 @@ class Clip extends StatefulWidget {
     this.onResume,
     this.onWillPop,
     AutovalidateMode? autovalidateMode,
-    this.focusNode,
+    this.focusNode,  
   })  : autovalidateMode = autovalidateMode ?? AutovalidateMode.disabled,
         super(key: key);
+
+  final FocusNode? focusNode;
 
   static ClipState of(BuildContext context) {
     final _ClipScope scope =
@@ -39,6 +41,25 @@ class ClipState extends State<Clip> {
   int _generation = 0;
   bool _hasInteractedByUser = false;
   bool _hasFocus = false;
+  final Set<ClipFieldState<dynamic>> _clips = <ClipFieldState<dynamic>>{};
+
+  void _handleFocusChange() {
+    setState(() {
+      _hasFocus = widget.focusNode?.hasFocus ?? false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode?.addListener(_handleFocusChange);  // Add this line
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode?.removeListener(_handleFocusChange);  // Add this line
+    super.dispose();
+  }
   final Set<ClipFieldState<dynamic>> _clips = <ClipFieldState<dynamic>>{};
 
   @override
@@ -166,9 +187,11 @@ class ClipField<T> extends StatefulWidget {
     this.initialValue,
     AutovalidateMode? autovalidateMode,
     this.enabled = true,
-    this.focusNode,
+    this.focusNode,  
   })  : autovalidateMode = autovalidateMode ?? AutovalidateMode.disabled,
         super(key: key);
+
+  final FocusNode? focusNode;
 
   final bool enabled;
   final AutovalidateMode autovalidateMode;
@@ -187,6 +210,26 @@ class ClipFieldState<T> extends State<ClipField<T>> {
   String? _errorText;
   bool _hasInteractedByUser = false;
   bool _hasFocus = false;
+
+  void _handleFocusChange() {
+    setState(() {
+      _hasFocus = widget.focusNode?.hasFocus ?? false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode?.addListener(_handleFocusChange);  // Add this line
+    Future.microtask(reset);
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode?.removeListener(_handleFocusChange);  // Add this line
+    Clip.of(context)._unregister(this);
+    super.dispose();
+  }
 
   T? get value => _value;
   String? get errorText => _errorText;
